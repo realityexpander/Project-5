@@ -43,8 +43,11 @@ const { USERNAME:username, PASSWORD:password} = require('./secrets'); // using r
   const loginButton = (await page.$$('button'))[1] 
   await loginButton.click()
   
+  // wait for navigation to complete
+  await page.waitForNavigation()
+
   // wait for search bar
-  await page.waitForSelector('#react-root > section > nav > div._8MQSO.Cx7Bp > div > div > div.LWmhU._0aCwM > input')
+  // await page.waitForSelector('#react-root > section > nav > div._8MQSO.Cx7Bp > div > div > div.LWmhU._0aCwM > input')
 
   // const USERNAME = 'realityexpanderdev'
   const USERNAME = 'jackiektrevino'
@@ -54,7 +57,7 @@ const { USERNAME:username, PASSWORD:password} = require('./secrets'); // using r
   await page.waitForSelector('article a')
   await (await page.$('article a')).click()
 
-  // wait for dialog Like button
+  // wait for Like button in the dialog
   // await page.waitForSelector('article button [aria-label="Like"]')
   await page.waitForSelector('body > div._2dDPU.CkGkG > div.zZYga > div > article > div.eo2As > section.ltpMr.Slqrh > span.fr66n > button > div > span > svg')
   
