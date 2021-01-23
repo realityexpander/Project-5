@@ -1,4 +1,6 @@
 const puppeteer = require('puppeteer');
+const secrets = require('./secrets');
+const { USERNAME:username, PASSWORD:password} = require('./secrets'); // using rename destructuring
 
 // Puppeteer docs
 // https://www.npmjs.com/package/puppeteer/v/1.11.0-next.1547527073587
@@ -10,27 +12,55 @@ const puppeteer = require('puppeteer');
 // RUN THIS LINE, but change the mac-XXXXX folder
 // sudo codesign --force --deep -s Puppeteer -f ./node_modules/puppeteer/.local-chromium/mac-782078/chrome-mac/Chromium.app 
 
-// test path in chromium
+// Use path in chromium
 // $x('//{Xpath here}')
 
-const username = 'aaa@bbb.com';
-const password = 'iksdjfs';
+// Use with QuerySelector in chromium
+// $('{selector}')
+
+// User with QuerySelectorAll in chromium
+// $$('{selector')
+
+// Click element in chromium
+// $('article a').click()
+
+// console.log(username, password) // destructured
 
 (async () => {
-  const browser = await puppeteer.launch({headless: false});
+  const browser = await puppeteer.launch({headless:  false});
   const page = await browser.newPage();
   await page.goto('https://instagram.com');
 
   await page.waitForSelector('input')
 
   const loginInputs = await page.$$('input')
-  await loginInputs[0].type(username)
-  await loginInputs[1].type(password)
+  await loginInputs[0].type(secrets.USERNAME)
+  await loginInputs[1].type(secrets.PASSWORD)
 
-  // const loginButton = (await page.$$('button'))[1] // login button
-  const loginButton = await page.$x('//*[@id="loginForm"]/div/div[3]/button')
-  await loginButton[0].click()
+  // const loginButton = await page.$x('//*[@id="loginForm"]/div/div[3]/button') // using xSelector
+  // await loginButton[0]
 
+  const loginButton = (await page.$$('button'))[1] 
+  await loginButton.click()
+  
+  // wait for search bar
+  await page.waitForSelector('#react-root > section > nav > div._8MQSO.Cx7Bp > div > div > div.LWmhU._0aCwM > input')
+
+  // const USERNAME = 'realityexpanderdev'
+  const USERNAME = 'jackiektrevino'
+  await page.goto(`https://instagram.com/${USERNAME}`)
+
+  // click first image
+  await page.waitForSelector('article a')
+  await (await page.$('article a')).click()
+
+  // wait for dialog Like button
+  // await page.waitForSelector('article button [aria-label="Like"]')
+  await page.waitForSelector('body > div._2dDPU.CkGkG > div.zZYga > div > article > div.eo2As > section.ltpMr.Slqrh > span.fr66n > button > div > span > svg')
+  
+  // Click like button
+  await (await page.$$('button svg'))[2].click()
+  // await (await page.$('article button [aria-label="Like"]')).click()
 
   // await browser.close();
 })();
