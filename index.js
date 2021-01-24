@@ -43,8 +43,10 @@ const { deleteOldProfilesFromSheet } = require("./deleteOldProfilesFromSheet");
   const page = await browser.newPage();
   await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36'); // prevents puppeteer headless not working
   // await page.setViewport({ width: 1920, height: 969 })
+  await page.setDefaultNavigationTimeout(3000)
 
   console.log("Navigating to instagram")
+  // await page.goto('https://instagram.com', {timeout: 3000});
   await page.goto('https://instagram.com');
 
   console.log("Waiting for selector 'input'")
