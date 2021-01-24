@@ -1,6 +1,7 @@
 const puppeteer = require('puppeteer');
 const secrets = require('./secrets');
 const { USERNAME:username, PASSWORD:password} = require('./secrets'); // using rename destructuring
+const Sheet = require('./sheet')
 
 // Puppeteer docs
 // https://www.npmjs.com/package/puppeteer/v/1.11.0-next.1547527073587
@@ -12,6 +13,12 @@ const { USERNAME:username, PASSWORD:password} = require('./secrets'); // using r
 // RUN THIS LINE, but change the mac-XXXXX folder
 // sudo codesign --force --deep -s Puppeteer -f ./node_modules/puppeteer/.local-chromium/mac-782078/chrome-mac/Chromium.app 
 
+// GCP
+// Credentials
+// https://console.cloud.google.com/apis/credentials?project=returnz-tester-215418
+
+
+// Notes on use of various Paths
 // Use path in chromium
 // $x('//{Xpath here}')
 
@@ -26,8 +33,8 @@ const { USERNAME:username, PASSWORD:password} = require('./secrets'); // using r
 
 // console.log(username, password) // destructured
 
-// const USERNAMES = ['jackiektrevino', 'jakepaul', 'aaronjack', 'realityexpander'];
-const USERNAMES = ['realityexpander'];
+const USERNAMES = ['jackiektrevino', 'jakepaul', 'aaronjack', 'realityexpander'];
+// const USERNAMES = ['realityexpander'];
 
 (async () => {
   const browser = await puppeteer.launch({headless: false});
@@ -48,11 +55,12 @@ const USERNAMES = ['realityexpander'];
   
   // wait for navigation to complete
   await page.waitForNavigation()
-  
+
   // wait for search bar
   // await page.waitForSelector('#react-root > section > nav > div._8MQSO.Cx7Bp > div > div > div.LWmhU._0aCwM > input')
   
-  // Scrape the USERNAMES array
+  // Scrape the USERNAMES array into profiles
+  const profiles = []
   for (let username of USERNAMES) {
     await page.goto(`https://instagram.com/${username}`)
     await page.waitForSelector('[data-testid="user-avatar"]')
@@ -76,30 +84,48 @@ const USERNAMES = ['realityexpander'];
     // Map header array to  header object
     let headerCountsObj = {}
     for(let i in headerCountsArr) {
-      headerCountsObj[headerCountsArr[i].split(' ')[1]] = headerCountsArr[i].split(' ')[0]
+      // headerCountsObj[headerCountsArr[i].split(' ')[1]] = headerCountsArr[i].split(' ')[0]
+      const [count, fieldName] = headerCountsArr[i].split(' ')
+      headerCountsObj[fieldName] = count
     }
 
     // Get profile name
     const profileName = await page.$eval('header h1', el => el.textContent)
-      .catch( (e) => { console.log('No description for profile:', username, `\nError:${e}`); return false } )
+      .catch( (e) => { console.log('No description for profile:', username, ",", e); return false } )
 
     // Get  description
     // const profileDescription = await page.$eval('header > section > div > span', el => el.textContent)
     const profileDescription = await page.$eval('.-vDIg span', el => el.textContent)
-      .catch( (e) => { console.log('No description for profile:', username, `\nError:${e}`); return false } )
+      .catch( (e) => { console.log('No description for profile:', username, ",", e); return false } )
 
     // Get link (may be missing)
     // const profileLink = await page.$eval('section > main > div header section div a', el => el.textContent)
     const profileLink = await page.$eval('.-vDIg a', el => el.textContent)
-      .catch( (e) => { console.log('No link for profile:', username, `\nError:${e}`); return false } ) 
+      .catch( (e) => { console.log('No link for profile:', username, ",", e); return false } ) 
 
     // console.log({profileSourceImg}, {postCount}, {followersCount}, {followingCount}, {profileDescription}, {profileLink})
     // console.log({headerCountsObj})
 
-    const profile = {profileSourceImg, headerCountsObj, profileName, profileDescription, profileLink}
+    const profile = {
+      username, 
+      profileName, 
+      profileDescription, 
+      posts: headerCountsObj.posts, 
+      followers: headerCountsObj.followers, 
+      following: headerCountsObj.following, 
+      profileSourceImg, 
+      profileLink
+    }
+
+    profiles.push(profile)
     console.log({profile})
   }
 
-  // await browser.close();
-  console.log("Finished.")
+  const sheet = new Sheet()
+  await sheet.load()
+  await sheet.addRows(profiles, 0)
+
+
+  await browser.close();
+  console.log(`Profiles scraped:${profiles.length}`)
 })();
