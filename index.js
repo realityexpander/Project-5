@@ -135,7 +135,8 @@ const { deleteOldProfilesFromSheet } = require("./deleteOldProfilesFromSheet");
     }
 
     profiles.push(profile)
-    console.log({profile})
+    // console.log({profile})
+    console.log("Profile scraped:", profile.username)
   }
 
   // Delete old profiles that were just scraped
