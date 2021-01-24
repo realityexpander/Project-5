@@ -34,18 +34,27 @@ const Sheet = require('./sheet')
 // console.log(username, password) // destructured
 
 // const USERNAMES = ['jackiektrevino', 'realityexpander', 'loganpaul', 'aaronjack'];
-// const USERNAMES = ['jackiektrevino', 'jakepaul', 'aaronjack'];
-const USERNAMES = ['realityexpander'];
+const USERNAMES = ['jackiektrevino', 'jakepaul', 'aaronjack'];
+// const USERNAMES = ['realityexpander'];
+
+const PROFILE_SHEET = 1
+const META_SHEET = 0
 
 (async () => {
-  const browser = await puppeteer.launch({headless: false});
-  // const browser = await puppeteer.launch();
+  // const browser = await puppeteer.launch({headless: true});
+  const browser = await puppeteer.launch();
   const page = await browser.newPage();
+  await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36'); // prevents puppeteer headless not working
+  // await page.setViewport({ width: 1920, height: 969 })
+
+  console.log("Navigating to instagram")
   await page.goto('https://instagram.com');
 
+  console.log("Waiting for selector 'input'")
+  // await page.waitForFunction('document.querySelector("input")'); // alternate way to wait for selector
   await page.waitForSelector('input')
-  // await page.waitForNavigation()
 
+  console.log("Entering credentials'")
   const loginInputs = await page.$$('input')
   await loginInputs[0].type(secrets.USERNAME)
   await loginInputs[1].type(secrets.PASSWORD)
@@ -53,10 +62,12 @@ const USERNAMES = ['realityexpander'];
   // const loginButton = await page.$x('//*[@id="loginForm"]/div/div[3]/button') // using xSelector
   // await loginButton[0]
 
+  console.log("waiting for button 'login'")
   const loginButton = (await page.$$('button'))[1] 
   await loginButton.click()
   
   // wait for navigation to complete
+  console.log("waiting for navigation")
   await page.waitForNavigation()
 
   // wait for search bar
@@ -66,6 +77,8 @@ const USERNAMES = ['realityexpander'];
   const profiles = []
   for (let username of USERNAMES) {
     await page.goto(`https://instagram.com/${username}`)
+
+    console.log("waiting for profile nav for ", username)
     await page.waitForSelector('[data-testid="user-avatar"]')
     
     // Get profile image
@@ -130,21 +143,20 @@ const USERNAMES = ['realityexpander'];
   // Delete old profiles on the sheet that were just scraped
   let finished = true
   do {
-    const oldProfiles = await sheet.getRows(0) // must be refreshed after each delete
+    const oldProfiles = await sheet.getRows(PROFILE_SHEET) // sheet must be refreshed after each delete
     finished = true
     for(let oldProfile of oldProfiles) {
       if (USERNAMES.includes(oldProfile.username)) {
         await oldProfile.delete()
         finished = false
-        console.log("Deleted:", oldProfile.username)
+        console.log("Old Profile Deleted:", oldProfile.username)
         break
       }
     }
   } while(!finished)
 
   // Add all Rows
-  await sheet.addRows(profiles, 0)
-
+  await sheet.addRows(profiles, PROFILE_SHEET)
 
   await browser.close();
   console.log(`Profiles scraped:${profiles.length}`)
