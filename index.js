@@ -17,6 +17,16 @@ const { deleteOldProfilesFromSheet } = require("./deleteOldProfilesFromSheet");
 // GCP
 // Credentials
 // https://console.cloud.google.com/apis/credentials?project=returnz-tester-215418
+// Functions
+// https://console.cloud.google.com/functions/list?project=returnz-tester-215418
+// Logs
+// https://console.cloud.google.com/logs/query;query=resource.type%3D%22cloud_function%22%0Aresource.labels.function_name%3D%22instagram-profile-scraper%22%0Aresource.labels.region%3D%22us-central1%22;timeRange=PT1H?project=returnz-tester-215418
+// Cron Jobs
+// https://console.cloud.google.com/cloudscheduler?project=returnz-tester-215418
+
+// Instagram Scraper Sheets
+// https://docs.google.com/spreadsheets/d/1n1OfB9i01R2QllRsGW-QfEa5yeF6qPybk0WZ7I8XcHU/edit#gid=0
+
 
 
 // Notes on use of various Paths in chromium
