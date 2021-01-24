@@ -83,7 +83,7 @@ const META_SHEET = 0;
     
     // Get profile image
     const profileSourceImg = await page.$eval('[data-testid="user-avatar"]', el => el.src)
-    // const profileSourceImg = await page.$eval('img', el => el.getAttribute('src'))
+    // const profileSourceImg = await page.$eval('img', el => el.getAttribute('src')) // alt way
 
     // Get post count
     const postCount = await page.$eval('header li:nth-child(1)', el => el.textContent.split(' ')[0])
@@ -100,7 +100,7 @@ const META_SHEET = 0;
     // Map header array to  header object
     let headerCountsObj = {}
     for(let i in headerCountsArr) {
-      // headerCountsObj[headerCountsArr[i].split(' ')[1]] = headerCountsArr[i].split(' ')[0]
+      // headerCountsObj[headerCountsArr[i].split(' ')[1]] = headerCountsArr[i].split(' ')[0] // alt way
       const [count, fieldName] = headerCountsArr[i].split(' ')
       headerCountsObj[fieldName] = count
     }
@@ -110,17 +110,14 @@ const META_SHEET = 0;
       .catch( (e) => { console.log('No description for profile:', username, ",", e); return false } )
 
     // Get  description
-    // const profileDescription = await page.$eval('header > section > div > span', el => el.textContent)
+    // const profileDescription = await page.$eval('header > section > div > span', el => el.textContent) // alt way
     const profileDescription = await page.$eval('.-vDIg span', el => el.textContent)
       .catch( (e) => { console.log('No description for profile:', username, ",", e); return false } )
 
     // Get link (may be missing)
-    // const profileLink = await page.$eval('section > main > div header section div a', el => el.textContent)
+    // const profileLink = await page.$eval('section > main > div header section div a', el => el.textContent) // alt way
     const profileLink = await page.$eval('.-vDIg a', el => el.textContent)
       .catch( (e) => { console.log('No link for profile:', username, ",", e); return false } ) 
-
-    // console.log({profileSourceImg}, {postCount}, {followersCount}, {followingCount}, {profileDescription}, {profileLink})
-    // console.log({headerCountsObj})
 
     const profile = {
       username, 
