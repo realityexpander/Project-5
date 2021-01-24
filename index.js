@@ -37,6 +37,8 @@ const { deleteOldProfilesFromSheet } = require("./deleteOldProfilesFromSheet");
   const PROFILE_SHEET = 1;
   const META_SHEET = 0;
 
+  console.log("starting function scrapeInstagram v2")
+  
   const browser = await puppeteer.launch({args: ['--no-sandbox'], headless: true});
   const page = await browser.newPage();
   await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36'); // prevents puppeteer headless not working
@@ -109,17 +111,17 @@ const { deleteOldProfilesFromSheet } = require("./deleteOldProfilesFromSheet");
 
     // Get profile name
     const profileName = await page.$eval('header h1', el => el.textContent)
-      .catch( (e) => { console.log('No description for profile:', username, ",", e); return false } )
+      .catch( (e) => { console.log('No description for profile:', username); return false } )
 
     // Get  description
     // const profileDescription = await page.$eval('header > section > div > span', el => el.textContent) // alt way
     const profileDescription = await page.$eval('.-vDIg span', el => el.textContent)
-      .catch( (e) => { console.log('No description for profile:', username, ",", e); return false } )
+      .catch( (e) => { console.log('No description for profile:', username); return false } )
 
     // Get link (may be missing)
     // const profileLink = await page.$eval('section > main > div header section div a', el => el.textContent) // alt way
     const profileLink = await page.$eval('.-vDIg a', el => el.textContent)
-      .catch( (e) => { console.log('No link for profile:', username, ",", e); return false } ) 
+      .catch( (e) => { console.log('No link for profile:', username); return false } ) 
 
     const profile = {
       username, 
