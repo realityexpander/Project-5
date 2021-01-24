@@ -33,15 +33,18 @@ const Sheet = require('./sheet')
 
 // console.log(username, password) // destructured
 
-const USERNAMES = ['jackiektrevino', 'jakepaul', 'aaronjack', 'realityexpander'];
-// const USERNAMES = ['realityexpander'];
+// const USERNAMES = ['jackiektrevino', 'realityexpander', 'loganpaul', 'aaronjack'];
+// const USERNAMES = ['jackiektrevino', 'jakepaul', 'aaronjack'];
+const USERNAMES = ['realityexpander'];
 
 (async () => {
   const browser = await puppeteer.launch({headless: false});
+  // const browser = await puppeteer.launch();
   const page = await browser.newPage();
   await page.goto('https://instagram.com');
 
   await page.waitForSelector('input')
+  // await page.waitForNavigation()
 
   const loginInputs = await page.$$('input')
   await loginInputs[0].type(secrets.USERNAME)
@@ -123,6 +126,23 @@ const USERNAMES = ['jackiektrevino', 'jakepaul', 'aaronjack', 'realityexpander']
 
   const sheet = new Sheet()
   await sheet.load()
+
+  // Delete old profiles on the sheet that were just scraped
+  let finished = true
+  do {
+    const oldProfiles = await sheet.getRows(0) // must be refreshed after each delete
+    finished = true
+    for(let oldProfile of oldProfiles) {
+      if (USERNAMES.includes(oldProfile.username)) {
+        await oldProfile.delete()
+        finished = false
+        console.log("Deleted:", oldProfile.username)
+        break
+      }
+    }
+  } while(!finished)
+
+  // Add all Rows
   await sheet.addRows(profiles, 0)
 
 

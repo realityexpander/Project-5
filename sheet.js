@@ -1,8 +1,12 @@
 const { GoogleSpreadsheet } = require('google-spreadsheet');
 
 
-// Instagram Scraper
+// Instagram Scraper sheet
 // https://docs.google.com/spreadsheets/d/1n1OfB9i01R2QllRsGW-QfEa5yeF6qPybk0WZ7I8XcHU/edit#gid=0
+
+// NPM docs google-spreadsheet
+// https://www.npmjs.com/package/google-spreadsheet
+
 
 
 class Sheet {
