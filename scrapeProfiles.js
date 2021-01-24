@@ -26,8 +26,11 @@ const { USERNAME:username, PASSWORD:password} = require('./secrets'); // using r
 
 // console.log(username, password) // destructured
 
+// const USERNAMES = ['jackiektrevino', 'jakepaul', 'aaronjack', 'realityexpander'];
+const USERNAMES = ['realityexpander'];
+
 (async () => {
-  const browser = await puppeteer.launch({headless:  false});
+  const browser = await puppeteer.launch({headless: false});
   const page = await browser.newPage();
   await page.goto('https://instagram.com');
 
@@ -45,15 +48,16 @@ const { USERNAME:username, PASSWORD:password} = require('./secrets'); // using r
   
   // wait for navigation to complete
   await page.waitForNavigation()
+  
   // wait for search bar
   // await page.waitForSelector('#react-root > section > nav > div._8MQSO.Cx7Bp > div > div > div.LWmhU._0aCwM > input')
   
-  const USERNAMES = ['jackiektrevino']
+  // Scrape the USERNAMES array
   for (let username of USERNAMES) {
     await page.goto(`https://instagram.com/${username}`)
     await page.waitForSelector('[data-testid="user-avatar"]')
     
-    // get profile image
+    // Get profile image
     const profileSourceImg = await page.$eval('[data-testid="user-avatar"]', el => el.src)
     // const profileSourceImg = await page.$eval('img', el => el.getAttribute('src'))
 
@@ -69,30 +73,32 @@ const { USERNAME:username, PASSWORD:password} = require('./secrets'); // using r
     // Get counts as array
     const headerCountsArr = await page.$$eval('header li', els => els.map( el => el.textContent) )
 
+    // Map header array to  header object
     let headerCountsObj = {}
     for(let i in headerCountsArr) {
       headerCountsObj[headerCountsArr[i].split(' ')[1]] = headerCountsArr[i].split(' ')[0]
     }
 
-    // Get synopsis
-    const profileSynopsis = await page.$eval('header > section > div > span', el => el.textContent)
+    // Get profile name
+    const profileName = await page.$eval('header h1', el => el.textContent)
+      .catch( (e) => { console.log('No description for profile:', username, `\nError:${e}`); return false } )
 
-    console.log({profileSourceImg}, {postCount}, {followersCount}, {followingCount}, {profileSynopsis})
-    console.log({headerCountsArr})
+    // Get  description
+    // const profileDescription = await page.$eval('header > section > div > span', el => el.textContent)
+    const profileDescription = await page.$eval('.-vDIg span', el => el.textContent)
+      .catch( (e) => { console.log('No description for profile:', username, `\nError:${e}`); return false } )
+
+    // Get link (may be missing)
+    // const profileLink = await page.$eval('section > main > div header section div a', el => el.textContent)
+    const profileLink = await page.$eval('.-vDIg a', el => el.textContent)
+      .catch( (e) => { console.log('No link for profile:', username, `\nError:${e}`); return false } ) 
+
+    // console.log({profileSourceImg}, {postCount}, {followersCount}, {followingCount}, {profileDescription}, {profileLink})
+    // console.log({headerCountsObj})
+
+    const profile = {profileSourceImg, headerCountsObj, profileName, profileDescription, profileLink}
+    console.log({profile})
   }
-
-  // // click first image
-  // await page.waitForSelector('article a')
-  // await (await page.$('article a')).click()
-
-  // // wait for Like button in the dialog
-  // // await page.waitForSelector('article button [aria-label="Like"]')
-  // await page.waitForSelector('body > div._2dDPU.CkGkG > div.zZYga > div > article > div.eo2As > section.ltpMr.Slqrh > span.fr66n > button > div > span > svg')
-  
-  // // Click like button
-  // await (await page.$$('button svg'))[2].click()
-  // // await (await page.$('article button [aria-label="Like"]')).click()
-
 
   // await browser.close();
   console.log("Finished.")
