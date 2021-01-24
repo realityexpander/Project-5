@@ -2,6 +2,7 @@ const puppeteer = require('puppeteer');
 const secrets = require('./secrets');
 // const { USERNAME:username, PASSWORD:password} = require('./secrets'); // using rename destructuring
 const Sheet = require('./sheet');
+const { deleteOldProfilesFromSheet } = require("./deleteOldProfilesFromSheet");
 
 // Puppeteer docs
 // https://www.npmjs.com/package/puppeteer/v/1.11.0-next.1547527073587
@@ -34,6 +35,7 @@ const PROFILE_SHEET = 1;
 const META_SHEET = 0;
 
 (async () => {
+
   // const browser = await puppeteer.launch({headless: true});
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
@@ -135,19 +137,7 @@ const META_SHEET = 0;
   }
 
   // Delete old profiles that were just scraped
-  let finished = true
-  do {
-    const oldProfiles = await sheet.getRows(PROFILE_SHEET) // sheet must be refreshed after each delete
-    finished = true
-    for(let oldProfile of oldProfiles) {
-      if (USERNAMES.includes(oldProfile.username)) {
-        await oldProfile.delete()
-        console.log("Old Profile Deleted:", oldProfile.username)
-        finished = false
-        break
-      }
-    }
-  } while(!finished)
+  await deleteOldProfilesFromSheet(sheet, PROFILE_SHEET, USERNAMES)
 
   // Add all Rows
   await sheet.addRows(profiles, PROFILE_SHEET)
@@ -155,3 +145,4 @@ const META_SHEET = 0;
   await browser.close();
   console.log(`Profiles scraped:${profiles.length}`)
 })();
+
