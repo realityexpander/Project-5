@@ -36,17 +36,4 @@ class Sheet {
     }
 }
 
-
-// async function test() {
-//     const sheet = new Sheet()
-
-//     await sheet.load()
-//     await sheet.addRows([
-//         { name: "Chris Athanas", email:'jimmy@ho.com'},
-//         { name: "Crap crapasaurus", email:'uyyy@hos.com'}
-//     ])
-// }
-// test()
-
-
 module.exports = Sheet

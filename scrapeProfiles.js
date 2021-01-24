@@ -1,16 +1,16 @@
 const puppeteer = require('puppeteer');
 const secrets = require('./secrets');
-const { USERNAME:username, PASSWORD:password} = require('./secrets'); // using rename destructuring
-const Sheet = require('./sheet')
+// const { USERNAME:username, PASSWORD:password} = require('./secrets'); // using rename destructuring
+const Sheet = require('./sheet');
 
 // Puppeteer docs
 // https://www.npmjs.com/package/puppeteer/v/1.11.0-next.1547527073587
 
-// Set security cert
+// Set security cert (to avoid annoying permissions pop-up for chromium)
 // https://github.com/puppeteer/puppeteer/issues/4752
 // https://stackoverflow.com/questions/54545193/puppeteer-chromium-on-mac-chronically-prompting-accept-incoming-network-connect
 // https://support.apple.com/en-gb/guide/keychain-access/kyca2686/mac
-// RUN THIS LINE, but change the mac-XXXXX folder
+// RUN THIS LINE, but change the mac-##### folder
 // sudo codesign --force --deep -s Puppeteer -f ./node_modules/puppeteer/.local-chromium/mac-782078/chrome-mac/Chromium.app 
 
 // GCP
@@ -18,27 +18,20 @@ const Sheet = require('./sheet')
 // https://console.cloud.google.com/apis/credentials?project=returnz-tester-215418
 
 
-// Notes on use of various Paths
-// Use path in chromium
-// $x('//{Xpath here}')
-
-// Use with QuerySelector in chromium
-// $('{selector}')
-
-// User with QuerySelectorAll in chromium
-// $$('{selector')
-
-// Click element in chromium
-// $('article a').click()
+// Notes on use of various Paths in chromium
+//   Use path in chromium
+//     $x('//{Xpath here}')
+//   Use with QuerySelector in chromium
+//     $('{selector}')
+//   Use with QuerySelectorAll in chromium
+//     $$('{selector')
+//   Click element in chromium
+//     $('article a').click()
 
 // console.log(username, password) // destructured
 
-// const USERNAMES = ['jackiektrevino', 'realityexpander', 'loganpaul', 'aaronjack'];
-const USERNAMES = ['jackiektrevino', 'jakepaul', 'aaronjack'];
-// const USERNAMES = ['realityexpander'];
-
-const PROFILE_SHEET = 1
-const META_SHEET = 0
+const PROFILE_SHEET = 1;
+const META_SHEET = 0;
 
 (async () => {
   // const browser = await puppeteer.launch({headless: true});
@@ -73,6 +66,13 @@ const META_SHEET = 0
   // wait for search bar
   // await page.waitForSelector('#react-root > section > nav > div._8MQSO.Cx7Bp > div > div > div.LWmhU._0aCwM > input')
   
+  const sheet = new Sheet()
+  await sheet.load()
+
+  // get profile account usernames from the Meta sheet
+  const USERNAMES = (await sheet.getRows(META_SHEET)).map(row => row.username)
+  console.log("Scraping:", {USERNAMES})
+
   // Scrape the USERNAMES array into profiles
   const profiles = []
   for (let username of USERNAMES) {
@@ -137,10 +137,7 @@ const META_SHEET = 0
     console.log({profile})
   }
 
-  const sheet = new Sheet()
-  await sheet.load()
-
-  // Delete old profiles on the sheet that were just scraped
+  // Delete old profiles that were just scraped
   let finished = true
   do {
     const oldProfiles = await sheet.getRows(PROFILE_SHEET) // sheet must be refreshed after each delete
@@ -148,8 +145,8 @@ const META_SHEET = 0
     for(let oldProfile of oldProfiles) {
       if (USERNAMES.includes(oldProfile.username)) {
         await oldProfile.delete()
-        finished = false
         console.log("Old Profile Deleted:", oldProfile.username)
+        finished = false
         break
       }
     }
