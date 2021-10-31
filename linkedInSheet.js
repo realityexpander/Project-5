@@ -12,13 +12,16 @@ const { GoogleSpreadsheet } = require('google-spreadsheet');
 
 
 class Sheet {
-    constructor() {
-        this.doc = new GoogleSpreadsheet('1wbXRXOo7jmVbuVmU7C7BAZ6ZC62gjMAhj02RUAsvccU');
+    constructor(google_sheet_id) {
+        this.doc = new GoogleSpreadsheet(google_sheet_id);
     }
     
-    async load() {
-        await this.doc.useServiceAccountAuth(require('./credentials.json'))
-        await this.doc.loadInfo(); // loads document properties and worksheets
+    async load(credentials) {
+      if(!credentials) {
+        let credentials = require('./credentials.json')
+      }
+      await this.doc.useServiceAccountAuth(credentials)
+      await this.doc.loadInfo(); // loads document properties and worksheets
     }
 
     async addRows(rows, sheetIndex) {

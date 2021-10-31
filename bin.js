@@ -1,0 +1,2 @@
+const linkedInScraper = require('.')
+linkedInScraper()

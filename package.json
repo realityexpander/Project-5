@@ -1,13 +1,14 @@
 {
-  "name": "project-5",
+  "name": "project-5-linkedin-scraper",
   "version": "1.0.0",
   "description": "",
-  "main": "linkedIn.js",
+  "main": "linkedin.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js",
     "li": "node --unhandled-rejections=strict linkedin.js "
   },
+  "bin": "bin.js",
   "keywords": [],
   "author": "Chris Athanas",
   "license": "ISC",

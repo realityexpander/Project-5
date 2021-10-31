@@ -1,5 +1,9 @@
 /.DS_Store
 /credentials.json
+/gcp-credentials.json
+/credentials-2.json
 /node_modules
 /secrets.js
-
+/li-secrets.txt
+/li-secrets.json
+li-secrets.js

@@ -3,6 +3,7 @@ const secrets = require('./li-secrets');
 // const { USERNAME:username, PASSWORD:password} = require('./secrets'); // using rename destructuring
 const Sheet = require('./linkedInSheet');
 const { deleteOldProfilesFromSheet } = require("./deleteOldProfilesFromSheet");
+const { exit } = require('process');
 const fs = require('fs')
 
 // Puppeteer docs
@@ -43,14 +44,26 @@ const fs = require('fs')
 
 // console.log(username, password) // destructured
 
+module.exports = function() {
+  run()
+}();
 
-(async () => {
+async function run() {
 
-  const PROFILE_SHEET = 1;
-  const META_SHEET = 0;
+  const PERSON_LINK_URL_COLUMN = 'person_linkedin_url'
+  const PERSON_LINK_SHORT_URL_COLUMN = 'person_linkedin_short_url'
 
-  console.log("starting function scrapeLinkedIn v1")
-  
+  console.log("Starting function scrapeLinkedIn v1.0")
+
+  let data = fs.readFileSync("./li-secrets.json").toString() 
+  let secrets = JSON.parse(data)
+  console.log(`LinkedIn login username: ${secrets.USERNAME}`)
+  console.log(`Google Sheets ID: ${secrets.GOOGLE_SHEET_ID}`)
+
+  data = fs.readFileSync("./gcp-credentials.json").toString()
+  let credentials = JSON.parse(data)
+  console.log(`Webscraper client email (sheet->share with this): ${credentials.client_email}`)
+
   const browser = await puppeteer.launch({
     args: [
       '--no-sandbox', 
@@ -77,7 +90,7 @@ const fs = require('fs')
   await loginUsername[0].type(secrets.USERNAME)
 
   const loginPassword = await page.$$('input#password')
-  console.log(`password=${secrets.PASSWORD.substring(0,4)}...`)
+  console.log(`password=${secrets.PASSWORD.substring(0,3)}...`)
   await loginPassword[0].type(secrets.PASSWORD)
 
   // const loginButton = await page.$x('//*[@id="loginForm"]/div/div[3]/button') // using xSelector
@@ -89,8 +102,8 @@ const fs = require('fs')
   console.log("Successfully logged in.")
 
   console.log("Loading Sheet...")
-  const sheet = new Sheet()
-  await sheet.load()
+  const sheet = new Sheet(secrets.GOOGLE_SHEET_ID)
+  await sheet.load(credentials)
   console.log("Sheet successfully loaded.")
 
   // get profile account links from the sheet
@@ -101,12 +114,12 @@ const fs = require('fs')
   // Scrape the LinkedInProfiles array into profiles
   let profilesSuccessCount = 0
   let profilesErrorCount = 0
-  let currentProfileCount = 0 
+  let currentProfileCount = 1
   let totalProfileCount = rows.length
   let errorProfiles = []
   for (let row of rows) {
   // let row = rows[0] {
-    let link = row.person_linkedin_url
+    let link = row[PERSON_LINK_URL_COLUMN]
     console.log(`${currentProfileCount}/${totalProfileCount} - Waiting for profile nav for ${row.person_first_name} ${row.person_last_name}:`, link)
     try {
       await page.goto(link)
@@ -118,7 +131,7 @@ const fs = require('fs')
       console.log("  Page Title: "+title);
 
       // save the url
-      row.person_linkedin_short_url = url;
+      row[PERSON_LINK_SHORT_URL_COLUMN] = url;
       await row.save();
 
       profilesSuccessCount++;
@@ -128,7 +141,7 @@ const fs = require('fs')
       const profile = {
         firstname: row.person_first_name, 
         lastname: row.person_last_name,
-        link: row.person_linkedin_url
+        link: row[PERSON_LINK_URL_COLUMN]
       }
       errorProfiles.push(profile)
       profilesErrorCount++;
@@ -150,5 +163,5 @@ const fs = require('fs')
   console.log(`Number of Problem profiles: ${profilesErrorCount}`)
   console.log('Problem profiles:')
   console.log(JSON.stringify(errorProfiles, null, 2))
-})();
+};
 
