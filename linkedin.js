@@ -1,8 +1,6 @@
 const puppeteer = require('puppeteer');
-const secrets = require('./li-secrets');
-// const { USERNAME:username, PASSWORD:password} = require('./secrets'); // using rename destructuring
+// const secrets = require('./li-secrets');
 const Sheet = require('./linkedInSheet');
-const { deleteOldProfilesFromSheet } = require("./deleteOldProfilesFromSheet");
 const { exit } = require('process');
 const fs = require('fs')
 
@@ -26,9 +24,6 @@ const fs = require('fs')
 // Cron Jobs
 // https://console.cloud.google.com/cloudscheduler?project=returnz-tester-215418
 
-// LinkedIn Scraper Sheet
-// https://docs.google.com/spreadsheets/d/1wbXRXOo7jmVbuVmU7C7BAZ6ZC62gjMAhj02RUAsvccU/edit#gid=0
-
 // https://codedec.com/tutorials/how-to-get-page-title-and-url-in-puppeteer/
 
 
@@ -45,25 +40,42 @@ const fs = require('fs')
 // console.log(username, password) // destructured
 
 module.exports = function() {
-  run()
+  scrapeLinkedIn()
 }();
 
-async function run() {
+async function scrapeLinkedIn() {
 
   const PERSON_LINK_URL_COLUMN = 'person_linkedin_url'
   const PERSON_LINK_SHORT_URL_COLUMN = 'person_linkedin_short_url'
 
   console.log("Starting function scrapeLinkedIn v1.0")
 
-  let data = fs.readFileSync("./li-secrets.json").toString() 
-  let secrets = JSON.parse(data)
-  console.log(`LinkedIn login username: ${secrets.USERNAME}`)
-  console.log(`Google Sheets ID: ${secrets.GOOGLE_SHEET_ID}`)
+  // Get username, password and sheet ID
+  let secrets
+  try {
+    let data = fs.readFileSync("./li-secrets.json").toString() 
+    secrets = JSON.parse(data)
+    console.log(`LinkedIn login username: ${secrets.USERNAME}`)
+    console.log(`Google Sheets ID: ${secrets.GOOGLE_SHEET_ID}`)
+    console.log(`Timeout Per Link: ${secrets.TIMEOUT_PER_LINK}`)
+  } catch {
+    console.log('ERROR: li-secrets.json is missing.')
+    exit(0)
+  }
 
-  data = fs.readFileSync("./gcp-credentials.json").toString()
-  let credentials = JSON.parse(data)
-  console.log(`Webscraper client email (sheet->share with this): ${credentials.client_email}`)
+  // Get google GCP credentials
+  let credentials
+  try {
+    data = fs.readFileSync("./gcp-credentials.json").toString()
+    credentials = JSON.parse(data)
+    console.log(`Webscraper client email (sheet should be shared with this): ${credentials.client_email}`)
+    console.log('')
+  } catch {
+    console.log('ERROR: gcp-credentials.json is missing.')
+    exit(0)
+  }
 
+  // startup puppeteer
   const browser = await puppeteer.launch({
     args: [
       '--no-sandbox', 
@@ -74,41 +86,43 @@ async function run() {
   const page = await browser.newPage();
   await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36'); // prevents puppeteer headless not working
   // await page.setViewport({ width: 1920, height: 969 })
-  page.setDefaultNavigationTimeout(7000)
+  page.setDefaultNavigationTimeout(15000)
 
   // Login
   console.log("Navigating to Linkedin...")
   await page.goto('https://linkedin.com/login');
 
-  console.log("Waiting for selector 'input'...")
+  console.log("Logging in...")
+  console.log("  Waiting for selector 'login'...")
   // await page.waitForFunction('document.querySelector("input")'); // alternate way to wait for selector
   await page.waitForSelector('input')
 
-  console.log("Entering credentials...")
+  console.log("  Entering credentials...")
   const loginUsername = await page.$$('input#username')
-  console.log(`username=${secrets.USERNAME}`)
+  console.log(`    username=${secrets.USERNAME}`)
   await loginUsername[0].type(secrets.USERNAME)
 
   const loginPassword = await page.$$('input#password')
-  console.log(`password=${secrets.PASSWORD.substring(0,3)}...`)
+  console.log(`    password=${secrets.PASSWORD.substring(0,2)}***`)
   await loginPassword[0].type(secrets.PASSWORD)
 
   // const loginButton = await page.$x('//*[@id="loginForm"]/div/div[3]/button') // using xSelector
   // await loginButton[0]
 
-  console.log("waiting for button 'sign in'...")
+  console.log("  Waiting for button 'sign in'...")
   const loginButton = (await page.$$('button'))[0] 
   await loginButton.click()
   console.log("Successfully logged in.")
 
-  console.log("Loading Sheet...")
+  console.log(`Loading Sheet ID: ${secrets.GOOGLE_SHEET_ID}`)
+  console.log(`  using API Service email address: ${credentials.client_email}`)
   const sheet = new Sheet(secrets.GOOGLE_SHEET_ID)
   await sheet.load(credentials)
   console.log("Sheet successfully loaded.")
 
   // get profile account links from the sheet
   let rows = await sheet.getRows(0)
-  console.log("Num Links Scraping:", rows.length)
+  console.log("Number of Links to scrape:", rows.length)
   console.log("----------BEGIN SCRAPING---------------")
 
   // Scrape the LinkedInProfiles array into profiles
@@ -152,7 +166,7 @@ async function run() {
   //     .catch( (e) => { console.log('No description for profile:', link); return false } )
     
     // Wait a bit
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(secrets.TIMEOUT_PER_LINK);
     currentProfileCount++;
   }
 
@@ -160,7 +174,7 @@ async function run() {
 
   console.log("----------END SCRAPING---------------");
   console.log(`Number of Successful Profiles scraped: ${profilesSuccessCount}`)
-  console.log(`Number of Problem profiles: ${profilesErrorCount}`)
+  console.log(`Number of Problem profiles encountered: ${profilesErrorCount}`)
   console.log('Problem profiles:')
   console.log(JSON.stringify(errorProfiles, null, 2))
 };
