@@ -2,13 +2,14 @@
   "name": "project-5",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "linkedIn.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "start": "node index.js",
+    "li": "node --unhandled-rejections=strict linkedin.js "
   },
   "keywords": [],
-  "author": "",
+  "author": "Chris Athanas",
   "license": "ISC",
   "dependencies": {
     "google-spreadsheet": "^3.0.11",

@@ -49,7 +49,7 @@ const { deleteOldProfilesFromSheet } = require("./deleteOldProfilesFromSheet");
 
   console.log("starting function scrapeInstagram v2")
   
-  const browser = await puppeteer.launch({args: ['--no-sandbox'], headless: true});
+  const browser = await puppeteer.launch({args: ['--no-sandbox'], headless: false});
   const page = await browser.newPage();
   await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36'); // prevents puppeteer headless not working
   // await page.setViewport({ width: 1920, height: 969 })
